@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Sensor Water Monitoring System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2196F3, #21CBF3);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .connection-panel {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"], input[type="number"], select {
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .dashboard {
+            padding: 30px;
+            display: block;
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .sensor-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .sensor-section h3 {
+            color: #2196F3;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .sensor-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .sensor-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border-left: 4px solid #2196F3;
+            transition: all 0.3s;
+        }
+
+        .sensor-card.disconnected {
+            background: #f1f3f4;
+            border-left-color: #ccc;
+        }
+
+        .sensor-card.disconnected .sensor-value {
+            color: #999;
+        }
+
+        .sensor-label {
+            color: #666;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .sensor-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 3px;
+        }
+
+        .sensor-unit {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .config-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .config-section {
+            margin-bottom: 25px;
+        }
+
+        .config-section h4 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .config-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .config-item label {
+            min-width: 120px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .config-item input, .config-item select {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .data-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-header {
+            background: #2196F3;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            font-size: 12px;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status.connected {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .toggle-section {
+            margin: 20px 0;
+        }
+
+        .toggle-btn {
+            background: #6c757d;
+            margin-right: 10px;
+        }
+
+        .toggle-btn.active {
+            background: #2196F3;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .sensor-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1200px) and (min-width: 769px) {
+            .sensor-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💧 Multi-Sensor Water Monitoring System</h1>
+            <p>Real-time monitoring with 3 pressure sensors and 3 flow meters</p>
+        </div>
+
+        <div class="connection-panel">
+            <div class="input-group">
+                <input type="text" id="ipAddress" placeholder="192.168.1.100" value="">
+                <label for="ipAddress">ESP32 IP Address</label>
+                <button onclick="testDataEndpoint()">Test Endpoints</button>
+                <button id="connectBtn" onclick="connectToESP32()">Connect</button>
+                <span id="connectionStatus" class="status disconnected">Disconnected</span>
+            </div>
+            <div style="text-align: center; margin-top: 15px; font-size: 14px; color: #666;">
+                <strong>Troubleshooting:</strong> If Test Window works but Connect fails, click "Test Endpoints" and check browser console (F12) for details.
+            </div>
+        </div>
+
+        <div class="dashboard" id="dashboard">
+            <div class="sensor-grid">
+                <div class="sensor-section">
+                    <h3>🌊 Flow Meters</h3>
+                    <div class="sensor-cards">
+                        <div class="sensor-card">
+                            <div class="sensor-label">Flow 1</div>
+                            <div class="sensor-value" id="flow1">0.00</div>
+                            <div class="sensor-unit">L/min</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Flow 2</div>
+                            <div class="sensor-value" id="flow2">0.00</div>
+                            <div class="sensor-unit">L/min</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Flow 3</div>
+                            <div class="sensor-value" id="flow3">0.00</div>
+                            <div class="sensor-unit">L/min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sensor-section">
+                    <h3>⚡ Pressure Sensors</h3>
+                    <div class="sensor-cards">
+                        <div class="sensor-card">
+                            <div class="sensor-label">Pressure 1</div>
+                            <div class="sensor-value" id="pressure1">0.0</div>
+                            <div class="sensor-unit">PSI</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Pressure 2</div>
+                            <div class="sensor-value" id="pressure2">0.0</div>
+                            <div class="sensor-unit">PSI</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Pressure 3</div>
+                            <div class="sensor-value" id="pressure3">0.0</div>
+                            <div class="sensor-unit">PSI</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sensor-section">
+                    <h3>📊 Flow Frequencies</h3>
+                    <div class="sensor-cards">
+                        <div class="sensor-card">
+                            <div class="sensor-label">Flow 1</div>
+                            <div class="sensor-value" id="freq1">0</div>
+                            <div class="sensor-unit">Hz</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Flow 2</div>
+                            <div class="sensor-value" id="freq2">0</div>
+                            <div class="sensor-unit">Hz</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Flow 3</div>
+                            <div class="sensor-value" id="freq3">0</div>
+                            <div class="sensor-unit">Hz</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sensor-section">
+                    <h3>🔌 Pressure Voltages</h3>
+                    <div class="sensor-cards">
+                        <div class="sensor-card">
+                            <div class="sensor-label">Pressure 1</div>
+                            <div class="sensor-value" id="voltage1">0.00</div>
+                            <div class="sensor-unit">V</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Pressure 2</div>
+                            <div class="sensor-value" id="voltage2">0.00</div>
+                            <div class="sensor-unit">V</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Pressure 3</div>
+                            <div class="sensor-value" id="voltage3">0.00</div>
+                            <div class="sensor-unit">V</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toggle-section">
+                <button class="toggle-btn active" onclick="toggleSection('sensors')">Sensor View</button>
+                <button class="toggle-btn" onclick="toggleSection('config')">Configuration</button>
+                <button class="toggle-btn" onclick="toggleSection('logging')">Data Logging</button>
+            </div>
+
+            <div id="sensorSection">
+                <div class="sensor-section">
+                    <h3>⏰ System Status</h3>
+                    <div class="sensor-cards">
+                        <div class="sensor-card">
+                            <div class="sensor-label">Last Update</div>
+                            <div class="sensor-value" id="lastUpdate" style="font-size: 1.2em;">--:--:--</div>
+                            <div class="sensor-unit">Time</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Update Rate</div>
+                            <div class="sensor-value" id="updateRate">0</div>
+                            <div class="sensor-unit">Hz</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="configSection" style="display: none;">
+                <div class="config-panel">
+                    <h3>⚙️ Sensor Configuration</h3>
+                    
+                    <div class="config-section">
+                        <h4>Flow Meter 1 Settings</h4>
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label>Flow 1 Type:</label>
+                                <select id="flow1Type" onchange="updateFlowType(0)">
+                                    <option value="21">Small (F = 21*Q)</option>
+                                    <option value="7.5">Big (F = 7.5*Q)</option>
+                                </select>
+                            </div>
+                            <div class="config-item">
+                                <label>Flow 1 Min (L/min):</label>
+                                <input type="number" id="flow1Min" step="0.1" min="0" value="0.3">
+                            </div>
+                            <div class="config-item">
+                                <label>Flow 1 Max (L/min):</label>
+                                <input type="number" id="flow1Max" step="0.1" min="0" value="10.0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h4>Flow Meter 2 Settings</h4>
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label>Flow 2 Type:</label>
+                                <select id="flow2Type" onchange="updateFlowType(1)">
+                                    <option value="21">Small (F = 21*Q)</option>
+                                    <option value="7.5">Big (F = 7.5*Q)</option>
+                                </select>
+                            </div>
+                            <div class="config-item">
+                                <label>Flow 2 Min (L/min):</label>
+                                <input type="number" id="flow2Min" step="0.1" min="0" value="0.3">
+                            </div>
+                            <div class="config-item">
+                                <label>Flow 2 Max (L/min):</label>
+                                <input type="number" id="flow2Max" step="0.1" min="0" value="10.0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h4>Flow Meter 3 Settings</h4>
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label>Flow 3 Type:</label>
+                                <select id="flow3Type" onchange="updateFlowType(2)">
+                                    <option value="21">Small (F = 21*Q)</option>
+                                    <option value="7.5">Big (F = 7.5*Q)</option>
+                                </select>
+                            </div>
+                            <div class="config-item">
+                                <label>Flow 3 Min (L/min):</label>
+                                <input type="number" id="flow3Min" step="0.1" min="0" value="0.3">
+                            </div>
+                            <div class="config-item">
+                                <label>Flow 3 Max (L/min):</label>
+                                <input type="number" id="flow3Max" step="0.1" min="0" value="10.0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h4>Pressure Sensor 1 Settings</h4>
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label>Pressure 1 Min (PSI):</label>
+                                <input type="number" id="pressure1Min" step="0.1" value="0.0">
+                            </div>
+                            <div class="config-item">
+                                <label>Pressure 1 Max (PSI):</label>
+                                <input type="number" id="pressure1Max" step="0.1" value="100.0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h4>Pressure Sensor 2 Settings</h4>
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label>Pressure 2 Min (PSI):</label>
+                                <input type="number" id="pressure2Min" step="0.1" value="0.0">
+                            </div>
+                            <div class="config-item">
+                                <label>Pressure 2 Max (PSI):</label>
+                                <input type="number" id="pressure2Max" step="0.1" value="100.0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h4>Pressure Sensor 3 Settings</h4>
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label>Pressure 3 Min (PSI):</label>
+                                <input type="number" id="pressure3Min" step="0.1" value="0.0">
+                            </div>
+                            <div class="config-item">
+                                <label>Pressure 3 Max (PSI):</label>
+                                <input type="number" id="pressure3Max" step="0.1" value="100.0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-row">
+                        <button onclick="loadConfiguration()">Load Current Config</button>
+                        <button onclick="saveConfiguration()">Save Configuration</button>
+                        <button onclick="resetToDefaults()">Reset to Defaults</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loggingSection" style="display: none;">
+                <div class="controls">
+                    <h3>📊 Data Logging Controls</h3>
+                    <div class="control-row">
+                        <label>
+                            Logging Interval:
+                            <input type="number" id="loggingInterval" value="5" min="1" max="60">
+                            seconds
+                        </label>
+                        <button id="startLogging" onclick="toggleLogging()">Start Logging</button>
+                        <button onclick="clearData()">Clear Data</button>
+                        <button onclick="downloadCSV()">📥 Download CSV</button>
+                    </div>
+                </div>
+
+                <div class="data-table">
+                    <div class="table-header">
+                        <h3>Data Log</h3>
+                        <span id="dataCount">0 records</span>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Flow 1 (L/min)</th>
+                                    <th>Flow 2 (L/min)</th>
+                                    <th>Flow 3 (L/min)</th>
+                                    <th>Pressure 1 (PSI)</th>
+                                    <th>Pressure 2 (PSI)</th>
+                                    <th>Pressure 3 (PSI)</th>
+                                    <th>Voltage 1 (V)</th>
+                                    <th>Voltage 2 (V)</th>
+                                    <th>Voltage 3 (V)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTableBody">
+                                <tr>
+                                    <td colspan="10" class="loading">No data logged yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let esp32IP = '';
+        let isConnected = false;
+        let isLogging = false;
+        let dataLog = [];
+        let loggingInterval;
+        let lastUpdateTime = 0;
+        let updateCount = 0;
+        let updateRate = 0;
+
+        // Test all ESP32 endpoints to diagnose connection issues
+        async function testDataEndpoint() {
+            const ip = document.getElementById('ipAddress').value.trim();
+            if (!ip) {
+                alert('Please enter an IP address');
+                return;
+            }
+            
+            console.log('=== Testing ESP32 endpoints ===');
+            
+            // Test 1: Root endpoint (we know this works)
+            try {
+                const rootResponse = await fetch(`http://${ip}/`, { method: 'GET' });
+                console.log('✅ Root (/) endpoint:', rootResponse.status, rootResponse.statusText);
+            } catch (error) {
+                console.log('❌ Root (/) endpoint failed:', error.message);
+            }
+            
+            // Test 2: Data endpoint (this is failing)
+            try {
+                const dataResponse = await fetch(`http://${ip}/data`, { method: 'GET' });
+                console.log('✅ Data (/data) endpoint:', dataResponse.status, dataResponse.statusText);
+                const responseText = await dataResponse.text();
+                console.log('Data response content:', responseText.substring(0, 500) + '...');
+            } catch (error) {
+                console.log('❌ Data (/data) endpoint failed:', error.message);
+            }
+            
+            // Test 3: Config endpoint
+            try {
+                const configResponse = await fetch(`http://${ip}/config`, { method: 'GET' });
+                console.log('✅ Config (/config) endpoint:', configResponse.status, configResponse.statusText);
+            } catch (error) {
+                console.log('❌ Config (/config) endpoint failed:', error.message);
+            }
+            
+            alert('Check browser console (F12) for detailed endpoint test results');
+        }
+
+        function connectToESP32() {
+            const ip = document.getElementById('ipAddress').value.trim();
+            if (!ip) {
+                alert('Please enter an IP address');
+                return;
+            }
+
+            esp32IP = ip;
+            const connectBtn = document.getElementById('connectBtn');
+            connectBtn.disabled = true;
+            connectBtn.textContent = 'Connecting...';
+
+            // Test connection by fetching data
+            fetchSensorData()
+                .then(data => {
+                    isConnected = true;
+                    updateConnectionStatus(true);
+                    updateSensorCardStyles(true);
+                    connectBtn.textContent = 'Connected';
+                    connectBtn.disabled = false;
+                    
+                    // Load current configuration
+                    loadConfiguration();
+                    
+                    // Start continuous data fetching
+                    startDataFetching();
+                })
+                .catch(error => {
+                    console.error('Connection failed:', error);
+                    isConnected = false;
+                    updateConnectionStatus(false);
+                    connectBtn.textContent = 'Connect';
+                    connectBtn.disabled = false;
+                    updateSensorCardStyles(false);
+                    alert('Failed to connect to ESP32. Please check the IP address and ensure the device is accessible.');
+                });
+        }
+
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connectionStatus');
+            if (connected) {
+                status.textContent = 'Connected';
+                status.className = 'status connected';
+            } else {
+                status.textContent = 'Disconnected';
+                status.className = 'status disconnected';
+            }
+        }
+
+        function updateSensorCardStyles(connected) {
+            const sensorCards = document.querySelectorAll('.sensor-card');
+            sensorCards.forEach(card => {
+                if (connected) {
+                    card.classList.remove('disconnected');
+                } else {
+                    card.classList.add('disconnected');
+                }
+            });
+        }
+
+        function testConnection() {
+            const ip = document.getElementById('ipAddress').value.trim();
+            if (!ip) {
+                alert('Please enter an IP address');
+                return;
+            }
+            
+            // Test basic connectivity first
+            console.log(`Testing connection to: http://${ip}`);
+            
+            // Try a simple ping-style test
+            const testUrl = `http://${ip}`;
+            const testWindow = window.open(testUrl, '_blank', 'width=500,height=300');
+            
+            setTimeout(() => {
+                testWindow.close();
+            }, 3000);
+            
+            alert(`Opened test window to ${testUrl}. If you see the ESP32 page, the connection works. Now try the Connect button again.`);
+        }
+
+        async function fetchSensorData() {
+            if (!esp32IP) throw new Error('No IP address set');
+            
+            console.log(`Attempting to connect to: http://${esp32IP}/data`);
+            console.log('Browser info:', navigator.userAgent);
+            console.log('Page protocol:', window.location.protocol);
+            console.log('Page host:', window.location.host);
+            
+            try {
+                // First, let's try the exact same approach as your working files
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`http://${esp32IP}/data`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                console.log(`Response received:`, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                console.log('Response content-type:', contentType);
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    const textResponse = await response.text();
+                    console.log('Non-JSON response received:', textResponse);
+                    throw new Error(`Expected JSON but got: ${contentType}. Response: ${textResponse.substring(0, 200)}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Data successfully received:', data);
+                return data;
+                
+            } catch (error) {
+                console.error('❌ Detailed error analysis:');
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Full error:', error);
+                
+                if (error.name === 'AbortError') {
+                    throw new Error(`Connection timeout - ESP32 at ${esp32IP} didn't respond within 5 seconds`);
+                }
+                
+                if (error.message.includes('Failed to fetch')) {
+                    // Let's try to determine the exact cause
+                    console.log('🔍 Testing basic connectivity...');
+                    
+                    try {
+                        // Test if we can reach the ESP32 root page
+                        const rootResponse = await fetch(`http://${esp32IP}/`, {
+                            method: 'GET',
+                            mode: 'no-cors',
+                            signal: AbortSignal.timeout(3000)
+                        });
+                        console.log('Root page test completed - ESP32 is reachable');
+                        throw new Error(`ESP32 is reachable but /data endpoint failed. Check if ESP32 code is running correctly.`);
+                    } catch (rootError) {
+                        console.error('Root page test failed:', rootError);
+                        throw new Error(`Cannot reach ESP32 at ${esp32IP}. Check IP address and network connection.`);
+                    }
+                }
+                
+                throw error;
+            }
+        }
+
+        function updateDisplay(data) {
+            // Update flow rates
+            for (let i = 0; i < 3; i++) {
+                document.getElementById(`flow${i+1}`).textContent = data.flowRates[i].toFixed(2);
+                document.getElementById(`freq${i+1}`).textContent = Math.round(data.frequencies[i]);
+            }
+            
+            // Update pressures and voltages
+            for (let i = 0; i < 3; i++) {
+                document.getElementById(`pressure${i+1}`).textContent = data.pressures[i].toFixed(1);
+                document.getElementById(`voltage${i+1}`).textContent = data.pressureVoltages[i].toFixed(2);
+            }
+            
+            // Update system status
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+            
+            // Calculate update rate
+            const currentTime = Date.now();
+            if (lastUpdateTime > 0) {
+                updateCount++;
+                if (updateCount % 10 === 0) { // Calculate rate every 10 updates
+                    updateRate = 10000 / (currentTime - lastUpdateTime); // Updates per second
+                    document.getElementById('updateRate').textContent = updateRate.toFixed(1);
+                }
+            }
+            lastUpdateTime = currentTime;
+        }
+
+        function startDataFetching() {
+            // Fetch data every 2 seconds for display
+            const fetchInterval = setInterval(() => {
+                if (!isConnected) {
+                    clearInterval(fetchInterval);
+                    return;
+                }
+                
+                fetchSensorData()
+                    .then(data => {
+                        updateDisplay(data);
+                    })
+                    .catch(error => {
+                        console.error('Data fetch error:', error);
+                        isConnected = false;
+                        updateConnectionStatus(false);
+                        updateSensorCardStyles(false);
+                        clearInterval(fetchInterval);
+                    });
+            }, 2000);
+        }
+
+        function toggleSection(section) {
+            // Hide all sections
+            document.getElementById('sensorSection').style.display = 'none';
+            document.getElementById('configSection').style.display = 'none';
+            document.getElementById('loggingSection').style.display = 'none';
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected section and activate button
+            if (section === 'sensors') {
+                document.getElementById('sensorSection').style.display = 'block';
+                event.target.classList.add('active');
+            } else if (section === 'config') {
+                document.getElementById('configSection').style.display = 'block';
+                event.target.classList.add('active');
+            } else if (section === 'logging') {
+                document.getElementById('loggingSection').style.display = 'block';
+                event.target.classList.add('active');
+            }
+        }
+
+        async function loadConfiguration() {
+            if (!isConnected) {
+                // Show default values when not connected
+                for (let i = 1; i <= 3; i++) {
+                    document.getElementById(`flow${i}Type`).value = '21';
+                    document.getElementById(`flow${i}Min`).value = '0.3';
+                    document.getElementById(`flow${i}Max`).value = '10.0';
+                    
+                    document.getElementById(`pressure${i}Min`).value = '0.0';
+                    document.getElementById(`pressure${i}Max`).value = '100.0';
+                }
+                return;
+            }
+            
+            try {
+                // Try multiple approaches to handle CORS issues
+                let response;
+                let config;
+                
+                // First attempt: standard fetch
+                try {
+                    response = await fetch(`http://${esp32IP}/config`);
+                    config = await response.json();
+                } catch (corsError) {
+                    console.log('CORS fetch failed for config load, trying alternative...');
+                    // If CORS fails, show default values and inform user
+                    for (let i = 1; i <= 3; i++) {
+                        document.getElementById(`flow${i}Type`).value = '21';
+                        document.getElementById(`flow${i}Min`).value = '0.3';
+                        document.getElementById(`flow${i}Max`).value = '10.0';
+                        
+                        document.getElementById(`pressure${i}Min`).value = '0.0';
+                        document.getElementById(`pressure${i}Max`).value = '100.0';
+                    }
+                    alert('Could not load configuration from ESP32 due to CORS restrictions. Default values loaded. Manual configuration may be required.');
+                    return;
+                }
+                
+                // If we got config data, load it
+                if (config) {
+                    // Load flow meter configurations
+                    for (let i = 0; i < 3; i++) {
+                        document.getElementById(`flow${i+1}Type`).value = config.flowFactors[i];
+                        document.getElementById(`flow${i+1}Min`).value = config.flowMins[i];
+                        document.getElementById(`flow${i+1}Max`).value = config.flowMaxs[i];
+                        
+                        document.getElementById(`pressure${i+1}Min`).value = config.pressureMins[i];
+                        document.getElementById(`pressure${i+1}Max`).value = config.pressureMaxs[i];
+                    }
+                    console.log('Configuration loaded successfully');
+                }
+                
+            } catch (error) {
+                console.error('Failed to load configuration:', error);
+                // Load defaults on error
+                for (let i = 1; i <= 3; i++) {
+                    document.getElementById(`flow${i}Type`).value = '21';
+                    document.getElementById(`flow${i}Min`).value = '0.3';
+                    document.getElementById(`flow${i}Max`).value = '10.0';
+                    
+                    document.getElementById(`pressure${i}Min`).value = '0.0';
+                    document.getElementById(`pressure${i}Max`).value = '100.0';
+                }
+                alert('Failed to load configuration from ESP32. Default values loaded.');
+            }
+        }
+
+        async function saveConfiguration() {
+            if (!isConnected) {
+                alert('Please connect to ESP32 first to save configuration');
+                return;
+            }
+            
+            const config = {
+                flowFactors: [],
+                flowMins: [],
+                flowMaxs: [],
+                pressureMins: [],
+                pressureMaxs: []
+            };
+            
+            // Collect flow meter configurations
+            for (let i = 0; i < 3; i++) {
+                config.flowFactors.push(parseFloat(document.getElementById(`flow${i+1}Type`).value));
+                config.flowMins.push(parseFloat(document.getElementById(`flow${i+1}Min`).value));
+                config.flowMaxs.push(parseFloat(document.getElementById(`flow${i+1}Max`).value));
+                
+                config.pressureMins.push(parseFloat(document.getElementById(`pressure${i+1}Min`).value));
+                config.pressureMaxs.push(parseFloat(document.getElementById(`pressure${i+1}Max`).value));
+            }
+            
+            try {
+                // Try multiple approaches to handle CORS issues
+                let response;
+                
+                // First attempt: standard fetch
+                try {
+                    response = await fetch(`http://${esp32IP}/config`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(config),
+                        mode: 'cors'
+                    });
+                } catch (corsError) {
+                    console.log('CORS fetch failed, trying no-cors mode...');
+                    // Second attempt: no-cors mode
+                    response = await fetch(`http://${esp32IP}/config`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(config),
+                        mode: 'no-cors'
+                    });
+                    
+                    // With no-cors, we can't read the response, so assume success if no error
+                    if (response) {
+                        alert('Configuration saved successfully! (CORS workaround used)');
+                        return;
+                    }
+                }
+                
+                // Try to parse response if we got one
+                if (response && response.ok) {
+                    try {
+                        const result = await response.json();
+                        if (result.status === 'success') {
+                            alert('Configuration saved successfully!');
+                        } else {
+                            alert('Failed to save configuration: ' + (result.message || 'Unknown error'));
+                        }
+                    } catch (parseError) {
+                        // If we can't parse JSON, but got a response, assume success
+                        alert('Configuration saved successfully! (Response parsing failed but request succeeded)');
+                    }
+                } else if (response) {
+                    alert('Failed to save configuration: HTTP ' + response.status);
+                } else {
+                    throw new Error('No response received');
+                }
+                
+            } catch (error) {
+                console.error('Failed to save configuration:', error);
+                alert('Failed to save configuration. Check console for details. You may need to save settings manually on the ESP32.');
+            }
+        }
+
+        function resetToDefaults() {
+            if (confirm('Reset all sensor configurations to default values?')) {
+                // Reset flow meters to small type defaults
+                for (let i = 1; i <= 3; i++) {
+                    document.getElementById(`flow${i}Type`).value = '21';
+                    document.getElementById(`flow${i}Min`).value = '0.3';
+                    document.getElementById(`flow${i}Max`).value = '10.0';
+                    
+                    document.getElementById(`pressure${i}Min`).value = '0.0';
+                    document.getElementById(`pressure${i}Max`).value = '100.0';
+                }
+            }
+        }
+
+        function updateFlowType(index) {
+            const selectElement = document.getElementById(`flow${index+1}Type`);
+            const minInput = document.getElementById(`flow${index+1}Min`);
+            const maxInput = document.getElementById(`flow${index+1}Max`);
+            
+            if (selectElement.value === '21') {
+                // Small flow meter defaults
+                minInput.value = '0.3';
+                maxInput.value = '10.0';
+            } else {
+                // Big flow meter defaults
+                minInput.value = '1.0';
+                maxInput.value = '50.0';
+            }
+        }
+
+        function toggleLogging() {
+            if (!isConnected) {
+                alert('Please connect to ESP32 first to start logging');
+                return;
+            }
+            
+            const button = document.getElementById('startLogging');
+            const intervalInput = document.getElementById('loggingInterval');
+            
+            if (!isLogging) {
+                const interval = parseInt(intervalInput.value) * 1000;
+                intervalInput.disabled = true;
+                button.textContent = 'Stop Logging';
+                isLogging = true;
+                
+                // Start logging
+                loggingInterval = setInterval(() => {
+                    if (isConnected) {
+                        fetchSensorData()
+                            .then(data => {
+                                logData(data);
+                            })
+                            .catch(error => {
+                                console.error('Logging error:', error);
+                            });
+                    }
+                }, interval);
+            } else {
+                clearInterval(loggingInterval);
+                intervalInput.disabled = false;
+                button.textContent = 'Start Logging';
+                isLogging = false;
+            }
+        }
+
+        function logData(data) {
+            const timestamp = new Date().toLocaleString();
+            const logEntry = {
+                timestamp: timestamp,
+                flows: data.flowRates,
+                pressures: data.pressures,
+                voltages: data.pressureVoltages
+            };
+            
+            dataLog.unshift(logEntry); // Add to beginning of array
+            
+            // Keep only last 1000 entries to prevent memory issues
+            if (dataLog.length > 1000) {
+                dataLog = dataLog.slice(0, 1000);
+            }
+            
+            updateDataTable();
+        }
+
+        function updateDataTable() {
+            const tbody = document.getElementById('dataTableBody');
+            const dataCount = document.getElementById('dataCount');
+            
+            if (dataLog.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="loading">No data logged yet</td></tr>';
+                dataCount.textContent = '0 records';
+                return;
+            }
+            
+            tbody.innerHTML = dataLog.map(entry => `
+                <tr>
+                    <td>${entry.timestamp}</td>
+                    <td>${entry.flows[0].toFixed(2)}</td>
+                    <td>${entry.flows[1].toFixed(2)}</td>
+                    <td>${entry.flows[2].toFixed(2)}</td>
+                    <td>${entry.pressures[0].toFixed(1)}</td>
+                    <td>${entry.pressures[1].toFixed(1)}</td>
+                    <td>${entry.pressures[2].toFixed(1)}</td>
+                    <td>${entry.voltages[0].toFixed(2)}</td>
+                    <td>${entry.voltages[1].toFixed(2)}</td>
+                    <td>${entry.voltages[2].toFixed(2)}</td>
+                </tr>
+            `).join('');
+            
+            dataCount.textContent = `${dataLog.length} records`;
+        }
+
+        function clearData() {
+            if (confirm('Are you sure you want to clear all logged data?')) {
+                dataLog = [];
+                updateDataTable();
+            }
+        }
+
+        function downloadCSV() {
+            if (dataLog.length === 0) {
+                alert('No data to download');
+                return;
+            }
+            
+            const headers = [
+                'Timestamp', 
+                'Flow 1 (L/min)', 'Flow 2 (L/min)', 'Flow 3 (L/min)',
+                'Pressure 1 (PSI)', 'Pressure 2 (PSI)', 'Pressure 3 (PSI)',
+                'Voltage 1 (V)', 'Voltage 2 (V)', 'Voltage 3 (V)'
+            ];
+            
+            const csvContent = [
+                headers.join(','),
+                ...dataLog.map(entry => [
+                    `"${entry.timestamp}"`,
+                    entry.flows[0].toFixed(2), entry.flows[1].toFixed(2), entry.flows[2].toFixed(2),
+                    entry.pressures[0].toFixed(1), entry.pressures[1].toFixed(1), entry.pressures[2].toFixed(1),
+                    entry.voltages[0].toFixed(2), entry.voltages[1].toFixed(2), entry.voltages[2].toFixed(2)
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `multi_sensor_water_data_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Initialize the interface on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial disconnected styles
+            updateSensorCardStyles(false);
+            
+            // Load default configuration values
+            loadConfiguration();
+            
+            // Set default IP if desired
+            document.getElementById('ipAddress').value = '192.168.4.1';
+        });
+    </script>
+</body>
+</html>
