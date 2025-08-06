@@ -269,4 +269,4 @@ For technical issues:
 **Version**: 1.0  
 **Last Updated**: January 2025  
 **Compatible**: ESP32-C6, ESP32-DEVKITC  
-**Requirements**: Arduino IDE, 12V power supply, compatible sensors
+**Requirements**: Arduino IDE, compatible sensors
